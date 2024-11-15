@@ -12,7 +12,7 @@ class BottomBar extends StatelessWidget {
       height: 60,
       color: Theme.of(context).colorScheme.primaryContainer,
       child: Padding(
-          padding: const EdgeInsets.only(left: 15.0, right: 15.0),
+          padding: const EdgeInsets.only(left: 30.0, right: 15.0, bottom: 30),
           child: child),
     );
   }

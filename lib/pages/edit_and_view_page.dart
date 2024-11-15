@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:apple_notes_clone/models/folders_provider.dart';
 import 'package:apple_notes_clone/models/notes_provider.dart';
 import 'package:apple_notes_clone/widgets/custom_back_button.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
 class EditViewPage extends StatefulWidget {
   const EditViewPage({
@@ -81,6 +82,50 @@ class _EditViewPageState extends State<EditViewPage> {
         .updateExistingNote(content, currentNote);
   }
 
+  void sendToGoogleGenerativeAI() async {
+    print(_controller.document.toPlainText());
+    // Make sure to include this import:
+    // import 'package:google_generative_ai/google_generative_ai.dart';
+    final model = GenerativeModel(
+      model: 'gemini-1.5-flash',
+      apiKey: "AIzaSyBWqOgz3ASk0smZ4VX0FxMW84nI2pEhL9o",
+    );
+
+    // Prompt for organizing, tagging, and returning the original text content
+    final prompt = '''
+Organize the following notes by giving each a meaningful title, relevant tags, and include the original text content. Ensure the tags describe the purpose, category, or context of each note.
+
+Notes:
+${_controller.document.toPlainText()}
+
+Example output:
+[
+  {
+    "index": 0,
+    "title": "Meet up with girlfriend",
+    "tags": ["social", "relationships"],
+    "content": "meet up with my girlfriend"
+  },
+  {
+    "index": 1,
+    "title": "Picnic plan for tomorrow",
+    "tags": ["recreation", "outdoor"],
+    "content": "go to picnic tomorrow"
+  },
+  {
+    "index": 2,
+    "title": "Flutter Amplify Integration",
+    "tags": ["work", "development", "AWS"],
+    "content": "amplify integration for flutter"
+  }
+]
+''';
+
+    // Generating organized content with original text included
+    final response = await model.generateContent([Content.text(prompt)]);
+    debugPrint(response.text, wrapWidth: 1024);
+  }
+
 //* controllers
   QuillController _controller = QuillController.basic();
   final FocusNode _focusNode = FocusNode();
@@ -117,14 +162,16 @@ class _EditViewPageState extends State<EditViewPage> {
           children: [
             Expanded(
               child: QuillEditor(
-                padding: const EdgeInsets.all(15),
-                autoFocus: false,
-                expands: true,
-                scrollable: true,
-                scrollController: _scrollController,
-                focusNode: _focusNode,
-                readOnly: false,
                 controller: _controller,
+                configurations: const QuillEditorConfigurations(
+                  expands: true,
+                  autoFocus: false,
+                  scrollable: true,
+                  placeholder: 'Start typing...',
+                  padding: EdgeInsets.all(15),
+                ),
+                focusNode: _focusNode,
+                scrollController: _scrollController,
               ),
             ),
             BottomBar(
@@ -138,46 +185,14 @@ class _EditViewPageState extends State<EditViewPage> {
                             ? "assets/checklist_dark.svg"
                             : "assets/checklist_light.svg",
                         width: 35)),
-                const Icon(CupertinoIcons.camera),
+                GestureDetector(
+                    onTap: sendToGoogleGenerativeAI,
+                    child: const Icon(CupertinoIcons.camera)),
                 const Icon(CupertinoIcons.pencil_outline),
                 const EditButton(
                     initiateQuickNote: true, callingFolderId: "quicknotes")
               ],
-            )
-                //! The buttons provided by flutter_quill
-                // controller: _controller,
-                // showUndo: false,
-                // showFontFamily: false,
-                // showBoldButton: false,
-                // showAlignmentButtons: false,
-                // showClearFormat: false,
-                // showUnderLineButton: false,
-                // showColorButton: false,
-                // showSmallButton: false,
-                // showBackgroundColorButton: false,
-                // showCenterAlignment: false,
-                // showRedo: false,
-                // showCodeBlock: false,
-                // showDirection: false,
-                // showFontSize: false,
-                // showItalicButton: false,
-                // showHeaderStyle: false,
-                // showListNumbers: false,
-                // showSubscript: false,
-                // showSuperscript: false,
-                // showSearchButton: false,
-                // showDividers: false,
-                // showIndent: false,
-                // showInlineCode: false,
-                // showJustifyAlignment: false,
-                // showLeftAlignment: false,
-                // showLink: false,
-                // showQuote: false,
-                // showStrikeThrough: false,
-                // showListBullets: false,
-                // showListCheck: true,
-                // )
-                )
+            ))
           ],
         ),
       ),
